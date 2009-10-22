@@ -1,1 +1,0 @@
-<?php $config['version']='20091021234942_new_migration.php'; ?>
