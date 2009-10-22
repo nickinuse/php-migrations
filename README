@@ -1,6 +1,10 @@
  Ruby on Rails-like database migration management for PHP
  (c) 2009 nickinuse@ofmy.info
  
+ WARNING
+  
+ Source provided AS-IS and subject to changes, it's advised to test migrations on a temporary database for now.
+ 
  DESCRIPTION
  
  The main aim of this project is to provide PHP developers with means of creating
