@@ -1,0 +1,42 @@
+ Ruby on Rails-like database migration management for PHP
+ (c) 2009 nickinuse@ofmy.info
+ 
+ DESCRIPTION
+ 
+ The main aim of this project is to provide PHP developers with means of creating
+ non-SQL based migrations and tools to maintain database changes between developers/
+ different project servers/sandboxes and database adaptors.
+ 
+ Whilst there already exist classes and tools for maintaining migrations in PHP,
+ very few of them can generate SQL changes through php functions (or do so through
+ awfully long class/function names). It was my aim to port most of the syntax and
+ functionality from RoR, being the main pioneer of migration-based approach. 
+
+ WHAT IS A DATABASE MIGRATION?
+ 
+ A migration is a description of changes made to the database [provided in 
+ the up() method] and means to revert them [provided in the down() method].
+ Migrations allow to automate the tedious process of maintaining the current 
+ state of the database between developers/database interfaces, keep track of changes
+ made (with means to undo them if required), make experimenting easy.
+ 
+ FEATURES
+ 
+    * generic helper functions for database independent SQL generation
+      (e.g. create_table, t_[basic type] for columns etc.; see db methods)
+    * command-line management
+    * timestamp-based migration file naming: avoid conflicts between developers
+    * transaction-based migration execution: prevent erroneous changes to succeed
+    * migration version is stored in a file, which allows easy transfer of migration setup
+      (note: it's adviced to exclude version.php from sandbox repositories)
+    * open-ended and flexible: provides means to allow for different database adapters,
+      convenient ways to specify function parameters (NB: adaptor implementations are welcome)
+ 
+ INSTALLATION/USE
+ 
+ rename config.sample.php to config.php and modify it as prompted in comments
+ 
+ to get started, launch a console in the directory containing migrate.php and launch:
+  db.bat help
+ or
+  php -f migrate.php help

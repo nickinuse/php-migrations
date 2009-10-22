@@ -1,0 +1,4 @@
+migrate/*
+nbproject/*
+config.php
+.xbackup*
