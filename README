@@ -1,5 +1,6 @@
  Ruby on Rails-like database migration management for PHP
  (c) 2009 nickinuse@ofmy.info
+ http://github.com/nickinuse/php-migrations
  
  WARNING
   
@@ -44,3 +45,5 @@
   db.bat help
  or
   php -f migrate.php help
+  
+ Have a look at some documentation: http://wiki.github.com/nickinuse/php-migrations
