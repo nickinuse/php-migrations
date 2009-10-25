@@ -185,10 +185,16 @@ function t_column($column='',$type='',$opt=array(),$sql=false) {
  $glue[]=isset($opt['null']) && !$opt['null']? "NOT" : "";
  $glue[]="NULL";
  $glue[]=!empty($opt['autoincrement']) ? "AUTO_INCREMENT" :"";
- foreach($config['indexes'] as $val=>$key) {
+ foreach($config['_indexes'] as $val=>$key)
   if ( !empty($opt[$key]) || !empty($opt[$key.'_key']) )
-   $config['fields'][]=strtoupper($key)." KEY ("._wrap($column).")";
- }
+   switch ($key) {
+    case 'primary':
+     $config['indexes'][]="PRIMARY KEY ("._wrap($column).")";
+     break;
+    default:
+     $config['indexes'][]=($key=='unique' ? 'UNIQUE ':'')."KEY "._wrap($column)." ("._wrap($column).")";
+     break;
+   }
  $glue[]=isset($opt['default']) ? "DEFAULT "._escape($opt['default']) :"";
  $glue[]=isset($opt['references']) ? "REFEREBCES ".$opt['references'] : "";
 
@@ -262,8 +268,11 @@ function create_table($table="",$opt=array(),$fields=array()) {
   $pkey=!empty($opt['primary_key']) ? _wrap($opt['primary_key']) : 'id';
   if (!isset($config['fields'][$pkey]))
    $config['fields']=array_merge(array($pkey=>""),$config['fields']);
-  t_column($pkey,'integer',array('unsigned'=>true,'autoincrement'=>true,'primary_key'=>true) );
+  t_column($pkey,'integer',array('unsigned'=>true,'autoincrement'=>true,'primary_key'=>true));
  }
+ if (!empty($config['indexes']))
+  foreach($config['indexes'] as $key=>$val)
+   $config['fields'][]=$val;
  $glue[]="\n(\n".join(",\n",$config['fields'])."\n)";
  $glue[]=!empty($opt['comment']) ? 'COMMENT="'.$opt['comment'].'"' : "";
  $glue[]=!empty($opt['options']) ? $opt['options'] : "TYPE = InnoDB /*!40100 DEFAULT CHARSET utf8 COLLATE utf8_general_ci */";
@@ -373,11 +382,15 @@ function create() {
       $config['escape'].") VALUES(".implode(",",array_values($ary)).");");
  }
 }
-function add_index($table,$index) {
- execute('ALTER TABLE '._wrap($table).' ADD INDEX '._wrap($index));
+/*
+ * table, field<br>
+ * option default is INDEX, can also be: unique, fulltext
+ */
+function add_index($table,$field,$option='index') {
+ execute('ALTER TABLE '._wrap($table).' ADD '.strtoupper($option).' '._wrap($field).' ('._wrap($field).')');
 }
-function remove_index($table,$index) {
- execute('ALTER TABLE '._wrap($table).' DROP INDEX '._wrap($index));
+function remove_index($table,$field,$option='index') {
+ execute('ALTER TABLE '._wrap($table).' DROP '.strtoupper($option).' '._wrap($field));
 }
 function delete_all($table) {
  execute("DELETE FROM "._wrap($table));
@@ -530,7 +543,7 @@ error_reporting(E_ALL);
 require 'config.php';
 $config['adapter']=strtolower($config['adapter']);
 $config['fields']=$config['trigger']=$config['indexes']=array();
-$config['indexes']=array('primary','unique','index');
+$config['_indexes']=array('primary','unique','index');
 $mapping="
 Rails	db2	mysql	openbase	Oracle
 :binary	blob(32678)	blob	object	blob
