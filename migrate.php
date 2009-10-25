@@ -400,9 +400,11 @@ function add_index($table,$field,$options=array()) {
  $glue[]=!empty($options['unique']) ? 'UNIQUE':'';
  $glue[]=!empty($options['fulltext']) ? 'FULLTEXT':'';
  $glue[]='INDEX';
- $glue[]=_wrap( !empty($options['name']) ? $options['name'] : implode("_".$field) );
- $glue[]=' ON '._wrap($table)."("._wrap($field).")";
- execute(implode(" ",$glue));
+ $glue[]=_wrap( !empty($options['name']) ? $options['name'] : implode("_",$field) );
+ foreach($field as $key=>$val)
+  $field[$key]=_wrap($val);
+ $glue[]=' ON '._wrap($table)."(".implode(',',$field).")";
+ execute(implode(" ",$glue).";");
 }
 /**
  * $field can be an array or explicit index name<br>
@@ -416,12 +418,12 @@ function remove_index($table,$field) {
  if (!is_array($field))
   $field=array($field);
  $glue=array('DROP INDEX');
- $glue[]=_wrap( implode("_".$field) );
+ $glue[]=_wrap( implode("_",$field) );
  $glue[]=' ON '._wrap($table);
- execute(implode(" ",$glue));
+ execute(implode(" ",$glue).";");
 }
 function delete_all($table) {
- execute("DELETE FROM "._wrap($table));
+ execute("DELETE FROM "._wrap($table).";");
 }
 /**
  * for running some sql directly
@@ -547,19 +549,23 @@ function _migrate($param=null) {
    echo "\n-- ".($step=='next' ? "apply" :"revert")." $migration\n";
    include $config['directory'].$version;
    $migration=new $migration;
+   $config['rollback']=false;
    execute("START TRANSACTION;");
    if ($step=='next') {
     $migration->up();
-    _version($version);
+    if (empty($config['rollback']))
+     _version($version);
    }
    else {
     $migration->down();
-    if (current($versions)===false)
-     @unlink('version.php');
-    else
-     _version(current($versions));
+    if (empty($config['rollback'])) {
+     if (current($versions)===false)
+      @unlink('version.php');
+     else
+      _version(current($versions));
+    }
    }
-   execute("COMMIT;");
+   execute(empty($config['rollback']) ? 'COMMIT;' : 'ROLLBACK;');
    echo "\n-- completed in ".(array_sum(explode(" ",microtime()))-$at)." --\n";
   }
   else

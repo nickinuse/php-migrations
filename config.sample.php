@@ -37,7 +37,10 @@ function _sql_hook($sql) {
   return "\n".$sql;
  $result = $config['adapter_query']($sql);
  if (!$result)
-  die('Invalid query: ' . $config['adapter_error']());
+ {
+  echo("\n\nInvalid query: ".$config['adapter_error']()."\n");
+  $config['rollback']=true;
+ }
 }
 ?>
 
