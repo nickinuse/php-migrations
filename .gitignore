@@ -2,4 +2,5 @@ migrate/*
 nbproject/*
 config.php
 .xbackup*
-version.php
+routes.*
+schema.*

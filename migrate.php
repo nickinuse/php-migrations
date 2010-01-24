@@ -6,7 +6,7 @@
  * this file is auto-formatted with NetBeans 6.7, tab=1
  */
 
-
+echo "\nphp-migrations (c) 2009 nickinuse, http://github.com/nickinuse";
 /**
  * returns corresponding type mapping for current $config['adapter']
  */
@@ -30,8 +30,8 @@ function _wrap($fields) {
  }
  else
   $result= $config['escape'].trim(
-      str_replace('.', $config['escape'].".".$config['escape'], $fields)," ".$config['escape']
-      ).$config['escape'];
+          str_replace('.', $config['escape'].".".$config['escape'], $fields)," ".$config['escape']
+          ).$config['escape'];
  return $result;
 }
 //
@@ -186,7 +186,7 @@ function t_column($column='',$type='',$opt=array(),$sql=false) {
  $glue[]="NULL";
  $glue[]=!empty($opt['autoincrement']) ? "AUTO_INCREMENT" :"";
  foreach($config['_indexes'] as $val=>$key)
-  if ( !empty($opt[$key]) || !empty($opt[$key.'_key']) )
+  if ( !empty($opt[$key]) || !empty($opt[$key.'_key']) ) {
    switch ($key) {
     case 'primary':
      $config['indexes'][]="PRIMARY KEY ("._wrap($column).")";
@@ -194,7 +194,8 @@ function t_column($column='',$type='',$opt=array(),$sql=false) {
     default:
      $config['indexes'][]=($key=='unique' ? 'UNIQUE ':'')."KEY "._wrap($column)." ("._wrap($column).")";
      break;
-   }
+   }//switch
+  }
  $glue[]=isset($opt['default']) ? "DEFAULT "._escape($opt['default']) :"";
  $glue[]=isset($opt['references']) ? "REFEREBCES ".$opt['references'] : "";
 
@@ -207,6 +208,10 @@ function t_column($column='',$type='',$opt=array(),$sql=false) {
  foreach($glue as $key=>$val)
   if ($val=="") unset($glue[$key]);
  $config['fields'][$column]=join(" ", $glue);
+}
+function _clear_options() {
+ global $config;
+ $config['fields']=$config['trigger']=$config['indexes']=array();
 }
 /**
  * Create table magic
@@ -283,17 +288,17 @@ function create_table($table="",$opt=array(),$fields=array()) {
   foreach($config['trigger'] as $field=>$value)
    $config['trigger'][$field]="NEW."._wrap($field)."="._escape($value);
   execute("CREATE TRIGGER event_insert BEFORE INSERT ON "._wrap($table).
-      "\nFOR EACH ROW SET\n\t".implode(",\n\t",$config['trigger']));
+          "\nFOR EACH ROW SET\n\t".implode(",\n\t",$config['trigger']));
  }
- $config['fields']=$config['trigger']=$config['indexes']=array();
+ _clear_options();
 }//create table
-
 
 /**
  * method to delete table
  */
 function drop_table($table) {
  execute("DROP TABLE "._wrap($table).";");
+ _clear_options();
 }
 /**
  * method to rename table
@@ -379,7 +384,7 @@ function create() {
    $ary[]="VALUES(".implode(',',$ary).")";
   }
   execute("INSERT INTO "._wrap($table)." (".$config['escape'].implode(_wrap(','),array_keys($ary)).
-      $config['escape'].") VALUES(".implode(",",array_values($ary)).");");
+          $config['escape'].") VALUES(".implode(",",array_values($ary)).");");
  }
 }
 /**
@@ -430,6 +435,8 @@ function delete_all($table) {
  */
 function execute($sql) {
  global $config;
+ if (!empty($config['rollbacl']))
+  return false;
  echo str_replace("\n","\n\t","\n$sql\n");
  $config['hook']($sql);
 }
@@ -468,13 +475,13 @@ function _generate($name) {
   die("version already exists as $file");
  $fp=fopen($file,'w');
  fwrite($fp,"<?php\nclass "._camelize($name)."\n{\n\tfunction up(){//add changes\n\t\t".
-     "\n\t}\n\tfunction down(){//revert changes\n\t\t\n\t}\n}\n?>");
+         "\n\t}\n\tfunction down(){//revert changes\n\t\t\n\t}\n}\n?>");
  fclose($fp);
  echo "\n generated $file";
 }
 /* *
  * internal function to convert provided string to filename
- */
+*/
 function _to_filename($name) {
  $name=preg_replace('@([A-Z])@','_$1',$name);
  $name=preg_replace('@[^a-z0-9_]@i', '_',$name);
@@ -491,29 +498,90 @@ function _version($version="") {
  global $config;
  if ($version) {
   $config['version']=$version;
-  $fp=fopen('version.php','w');
-  fwrite($fp,"<?php \$config['version']='$version'; ?>");
+  $fp=fopen('schema.php','w');
+  fwrite($fp,"<?php\n\$config['version']='".addslashes($version)."';\n".
+          "\$config['schema']='\n".str_replace("'","\'",implode("\n",$config['schema']))."\n';\n?>");
   fclose($fp);
  }
  return @$config['version'];
 }
 
+function _single_migration($tmp,$step=NULL) {
+ global $versions,$config;
+ $version=$tmp;
+ $migration=substr($version,strpos($version,'_')+1);
+ $migration=str_replace('.php','',$migration);
+ $migration=_camelize($migration);
+ $at=array_sum(explode(" ",microtime()));
+ echo "\n-- ".($step!='prev' ? "apply" :"revert")." $migration\n";
+ include $config['directory'].$version;
+ $migration=new $migration;
+ $config['rollback']=false;
+ execute("START TRANSACTION;");
+ if ($step=='next' || $step==NULL) {
+  $migration->up();
+  if (empty($config['rollback'])) {
+   if ($step!==NULL) {
+    $config['schema'][]=$version;
+    $config['schema']=array_unique($config['schema']);
+    _version($version);
+   }
+  }
+ }
+ else {
+  $migration->down();
+  if (empty($config['rollback'])) {
+   if (current($versions)===false)
+    @unlink('schema.php');
+   else {
+    $tmp=array_search(current($versions),$config['schema']);
+    if ($tmp!==false)
+     unset($config['schema'][$tmp]);
+    _version(current($versions));
+   }
+  }
+ }
+ execute(empty($config['rollback']) ? 'COMMIT;' : 'ROLLBACK;');
+ echo "\n-- completed in ".(array_sum(explode(" ",microtime()))-$at)." --\n";
+ if (!empty($config['rollback']))
+  exit();
+}
+
 function _migrate($param=null) {
  global $versions,$config;
+ if (!empty($config['rollback']))
+  exit("\nexecution stopped");
  //move to current version index
  $version=_version();
  if ($version) {
   if (!in_array($version,$versions))
    exit("\n$version doesn't match existing migrations");
   reset($versions);
+  $sync=array();
   //go to current version
   while (($tmp=current($versions))!==false) {
+   if (!in_array($tmp,$config['schema'])) {
+    print "\n$tmp";
+    $sync[]=$tmp;//catch up migrations
+   }
    if ($tmp==$version) {
     echo "\ncurrent version: $tmp";
     break;
    }
    else
     next($versions);
+  }
+  if ($param>-1 && $sync) {
+   echo "\nsync non-schema migrations";
+   foreach($sync as $tmp) {
+    _single_migration($tmp);
+    if (empty($config['rollback'])) {
+     $config['schema'][]=$tmp;
+     _version($version);
+    }
+    else
+     exit("\nsync stopped");
+   }
   }
  }
  //process param
@@ -536,37 +604,11 @@ function _migrate($param=null) {
  }
  elseif (current($versions)==$version)
   next($versions);
- execute("SET autocommit=0;");
  while($param-->0) {
   $tmp=current($versions);
   $step($versions);
   if ($tmp!==false) {
-   $version=$tmp;
-   $migration=substr($version,strpos($version,'_')+1);
-   $migration=str_replace('.php','',$migration);
-   $migration=_camelize($migration);
-   $at=array_sum(explode(" ",microtime()));
-   echo "\n-- ".($step=='next' ? "apply" :"revert")." $migration\n";
-   include $config['directory'].$version;
-   $migration=new $migration;
-   $config['rollback']=false;
-   execute("START TRANSACTION;");
-   if ($step=='next') {
-    $migration->up();
-    if (empty($config['rollback']))
-     _version($version);
-   }
-   else {
-    $migration->down();
-    if (empty($config['rollback'])) {
-     if (current($versions)===false)
-      @unlink('version.php');
-     else
-      _version(current($versions));
-    }
-   }
-   execute(empty($config['rollback']) ? 'COMMIT;' : 'ROLLBACK;');
-   echo "\n-- completed in ".(array_sum(explode(" ",microtime()))-$at)." --\n";
+   _single_migration($tmp,$step);
   }
   else
    exit();
@@ -620,15 +662,29 @@ foreach($mapping as $line) {
    if (!isset($_map[$adapter]))
     $_map[$adapter]=array();
    $_map[$adapter][$type]=array_shift($ary);
- }//each adapter
-}//else
+  }//each adapter
+ }//else
 }//each line
 $_map['mysqli']=$_map['mysql'];//alias
 
-function _newline() { echo "\n"; }
+function _newline() {
+ echo "\n";
+}
 register_shutdown_function("_newline");
 
-@include 'version.php';
+
+# @todo:remove
+#unlink('schema.php');
+#execute("drop table if exists ofmy_images,ofmy_comments,ofmy_image_tags,ofmy_tags;");*/
+
+@include 'schema.php';
+if (empty($config['schema']))
+ $config['schema']=array();
+else {
+ $config['schema']=explode("\n", trim( preg_replace( '/\s+/',"\n", $config['schema']) ) );
+ foreach($config['schema'] as $key=>$val)
+  $config['schema'][$key]=trim($val);
+}
 @mkdir($config['directory']);
 $ary=glob($config['directory']. '*.php');
 $versions=array();
@@ -685,6 +741,7 @@ if (empty($argv) || array_intersect(array('--help','help','/?'), $argv)) {
 else
  while($argv) {
   $key=strtolower(array_shift($argv));
+  echo "\ncommand $key";
   switch($key) {
    case 'create':
     _argv('database');
@@ -740,7 +797,7 @@ else
    case 'reset':
     drop_db();
     create_db();
-    @unlink('version.php');
+    @unlink('schema.php');
     _migrate();
     break;
    case   'roll':
@@ -779,6 +836,6 @@ else
    default:
     echo "\n"._version();
     break;
- }//switch argv
+  }//switch argv
 }//while argv
 ?>
