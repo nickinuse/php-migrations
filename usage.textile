@@ -1,0 +1,106 @@
+config.sample.php contains an implementation for the mysql(i) adapter functions. Rename the file to config.php, provide your database credentials and You should be good to go.
+
+Some basic usage:
+
+The name of the migration should be CamelCased and/or under_scored as it'll be converted to a class name. Launch a console/terminal at the folder that contains the migrations.php and config.php file.
+Type
+<pre>php -f migrate.php generate SampleTable</pre>
+(this is the same as: php -f migrate.php generate sample_table or php -f migrate.php generate Sample_Table).
+A convenience batch file (either db.bat or db.sh [you should chmod it executable])  is provided, so you may type "db" instead of "php -f migrate.php" e.g.:
+<pre>db generate sample_table</pre>
+
+This should create a folder subfolder called "migrate" and a file named [bunch of numbers]_sample_table.php. The "bunch of numbers" is actually the file's timestamp in yyyymmddhhiiss format.
+
+The file is a blank template for your migration and initially looks like:
+<pre><?php
+class SampleTable
+{
+	function up(){//add changes
+		
+	}
+	function down(){//revert changes
+		
+	}
+}
+?></pre>
+
+Let's create a sample migration with a table structure for some articles:
+
+<pre><?php
+class SampleTable {
+ function up() {//add changes
+  create_table('sample_table',array( //of columns
+      //mysql doesn't allow defaults for *char type columns, so this should create a trigger
+      t_string('title', array('default'=>'Untitled' ) ),//short column, e.g. varchar(255)
+      t_text('body'),//long column, e.g. TEXT/BLOB
+      t_integer('comments',array('default'=>0)),//to store comment count
+      t_boolean('published'),
+      //magic method that adds created/updated_at columns and triggers to update them
+      t_timestamps()
+  ));
+
+ }
+ function down() {//revert changes
+  drop_table('sample_table');
+ }
+}
+?></pre>
+
+to apply the changes and create the table run:
+<pre>db migrate up</pre>
+ or simply
+<pre>db migrate</pre>
+and to undo them
+<pre>db migrate down</pre>
+  or
+ <pre>db roll -1</pre>
+  or even (since there are no other migrations yet, roll back all migrations)
+ <pre>db migrate zero</pre>
+
+h2. Other methods you might often use
+
+<pre>drop_table($table_name) e.g. 
+drop_table('products')
+
+rename_table($old_name,$new_name)
+
+add_column($table,$column_definition) e.g.
+add_column('images',t_boolean('has_thumb',array('after'=>'file','default'=>0)));
+
+change_column($table,$column,$new_column_definition)
+
+remove_column($table,*$column_names) t.i. you can pass several columns to remove
+remove_column('images','has_thumb')
+remove_column('images','has_thumb','file'...)
+
+rename_column($table,$column,$column_definition), e.g.
+rename_column('tags', 'tag', t_string('keyword',array('index'=>true)) );
+
+add_index($table,$str_or_ary_field,$options)
+add_index('table','field');
+add_index('table','text_field',array('fulltext'=>true));
+add_index('table', array('field1','field2'), array('unique'=>true)); //index name will be set to 'field1_field2'
+add_index('table', array('field1','field2'), array('unique'=>true,'name'=>'composite_name'));
+
+remove_index($table,$str_or_ary_$field)
+remove_index('table',array('field1','field2'));
+</pre>
+
+h2. Common column types, shorthand versions
+
+You can use the following helper functions for column definitions. They are essentially the same as calling t_column($column_name,$type=[string|text|integer...],[$options])
+
+<pre>t_binary()
+t_boolean()
+t_datetime()
+t_decimal()
+t_float()
+t_integer()
+t_string()
+t_text()
+t_timestamp()
+</pre>
+
+A special case is
+<pre>t_timestamps()</pre>
+that creates both the created_at/updated_at columns and according triggers to keep track of db record updates.
