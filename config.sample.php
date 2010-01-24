@@ -33,11 +33,12 @@ if (!empty($config['execute'])) {
 }
 function _sql_hook($sql) {
  global $config;
+ if ($config['rollback'])
+  return FALSE;
  if (empty($config['execute']))
   return "\n".$sql;
  $result = $config['adapter_query']($sql);
- if (!$result)
- {
+ if (!$result) {
   echo("\n\nInvalid query: ".$config['adapter_error']()."\n");
   $config['rollback']=true;
  }
