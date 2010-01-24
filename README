@@ -33,7 +33,7 @@
     * timestamp-based migration file naming: avoid conflicts between developers
     * transaction-based migration execution: prevent erroneous changes to succeed
     * migration version is stored in a file, which allows easy transfer of migration setup
-      (note: it's adviced to exclude version.php from sandbox repositories)
+      (note: you should exclude/ignore schema.php from sandbox repositories)
     * open-ended and flexible: provides means to allow for different database adapters,
       convenient ways to specify function parameters (NB: adaptor implementations are welcome)
  
