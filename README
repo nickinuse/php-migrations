@@ -46,4 +46,6 @@
  or use the provided convenience shell script
   db help
   
+ If wanting to share with another developer, you should fork/uignore the migrate folder.
+ 
  Have a look at some documentation: http://wiki.github.com/nickinuse/php-migrations
