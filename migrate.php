@@ -285,9 +285,10 @@ function create_table($table="",$opt=array(),$fields=array()) {
  $glue[]=";";
  execute(trim(join(" ",$glue)));
  if (!empty($config['trigger'])) {
+  $name=array_keys($config['trigger']);
   foreach($config['trigger'] as $field=>$value)
    $config['trigger'][$field]="NEW."._wrap($field)."="._escape($value);
-  execute("CREATE TRIGGER event_insert BEFORE INSERT ON "._wrap($table).
+  execute("CREATE TRIGGER `insert_".implode('_',$name)."` BEFORE INSERT ON "._wrap($table).
           "\nFOR EACH ROW SET\n\t".implode(",\n\t",$config['trigger']));
  }
  _clear_options();
