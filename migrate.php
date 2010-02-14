@@ -318,10 +318,11 @@ function add_column($table,$column=null,$type="string",$opt=array()) {
  global $config;
  if ($column!==null)
   t_column($column,$type,$opt);
- else
-  $column=key($config['fields']);
- execute('ALTER TABLE '._wrap($table).' ADD '. $config['fields'][$column]);
- unset($config['fields'][$column]);
+ $columns=$config['fields'];
+ foreach($columns as $column=>$options) {
+  execute('ALTER TABLE '._wrap($table).' ADD '. $config['fields'][$column]);
+  unset($config['fields'][$column]);
+ }
 }
 /**
  * params similar to add_column()
@@ -672,11 +673,6 @@ function _newline() {
 }
 register_shutdown_function("_newline");
 
-
-# @todo:remove
-#unlink('schema.php');
-#execute("drop table if exists ofmy_images,ofmy_comments,ofmy_image_tags,ofmy_tags;");*/
-
 @include 'schema.php';
 if (empty($config['schema']))
  $config['schema']=array();
@@ -818,8 +814,13 @@ else
     if (!$param)
      $param=$config['database'].'_'.date('ymdhis').'.sql';
     echo "\ncreating $param";
-    if (substr($config['adapter'],0,5)=='mysql')
-     shell_exec('mysqldump --user "'.$config['user'].'" --password="'.$config['password'].'" "'.$config['database'].'" > "'.$param.'"');
+    if (substr($config['adapter'],0,5)=='mysql') {
+     echo "\nbackup depends on mysqldump utility available in path, if not run manually:";
+     $cmd='mysqldump --user "'.$config['user'].'" --password="'.$config['password'].'" "'.$config['database'].'" > "'.$param.'"';
+     echo "\n".$cmd;
+     flush();
+     shell_exec($cmd);
+    }
     else
      die("not implemented yet");
     break;
