@@ -1,6 +1,9 @@
  Ruby on Rails-like database migration management for PHP
- (c) 2009/2010 nickinuse@ofmy.info
  http://github.com/nickinuse/php-migrations
+ 
+ some (c) 2009/2010 nickinuse@ofmy.info
+ free to share, remix, use in commercial projects, with ot without attribution
+ as long as the source is treated AS-IS without expecting any specific support ;)
  
  WARNING
   
