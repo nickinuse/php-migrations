@@ -3,7 +3,7 @@
  *  Ruby-like abstract syntax migrations for PHP
  * (c) 2009 nickinuse@ofmy.info
  *
- * this file is auto-formatted with NetBeans 6.7, tab=1
+ * this file is auto-formatted with NetBeans 6.8, tab=1
  */
 
 echo "\nphp-migrations (c) 2009 nickinuse, http://github.com/nickinuse";
@@ -380,7 +380,7 @@ function create() {
  global $config;
  $params=func_get_args();
  $table=array_shift($params);
- while ( ($ary=array_shift($params)) !==false) {
+ while ( ($ary=array_shift($params))!==null) {
   foreach($ary as $key=>$value) {
    $value=_escape($value);
    $ary[]="VALUES(".implode(',',$ary).")";
