@@ -267,7 +267,7 @@ function create_table($table="",$opt=array(),$fields=array()) {
  }
  $glue[]="CREATE";
  $glue[]=!empty($opt['temporary']) ? "TEMPORARY":"";
- $glue[]="TABLE "._wrap($table);
+ $glue[]="TABLE IF NOT EXISTS "._wrap($table);
  if (!(isset($opt['id']) && !$opt['id']) ) //no primary key option
  {
   $pkey=!empty($opt['primary_key']) ? _wrap($opt['primary_key']) : 'id';
@@ -500,7 +500,9 @@ function _version($version="") {
  global $config;
  if ($version) {
   $config['version']=$version;
-  $fp=fopen('schema.php','w');
+  @mkdir('./schema/');
+  @chmod('./schema/',0755);
+  $fp=fopen('./schema/schema.php','w');
   fwrite($fp,"<?php\n\$config['version']='".addslashes($version)."';\n".
           "\$config['schema']='\n".str_replace("'","\'",implode("\n",$config['schema']))."\n';\n?>");
   fclose($fp);
@@ -534,7 +536,7 @@ function _single_migration($tmp,$step=NULL) {
   $migration->down();
   if (empty($config['rollback'])) {
    if (current($versions)===false)
-    @unlink('schema.php');
+    @unlink('./schema/schema.php');
    else {
     $tmp=array_search(current($versions),$config['schema']);
     if ($tmp!==false)
@@ -649,8 +651,9 @@ Rails	postgresql	sqlite	sqlserver	Sybase
 :timestamp	timestamp	datetime	datetime	timestamp";
 //parse type mappings for different adapters
 $_map=array();
-$mapping=explode("\r\n",trim($mapping));
+$mapping=explode("\n",trim($mapping));
 foreach($mapping as $line) {
+ $line=trim($line);
  $line=preg_replace('@\s+@','_',$line);
  if ($line[0]!=':') {
   $adapters=explode('_',strtolower($line));
@@ -674,7 +677,7 @@ function _newline() {
 }
 register_shutdown_function("_newline");
 
-@include 'schema.php';
+@include './schema/schema.php';
 if (empty($config['schema']))
  $config['schema']=array();
 else {
@@ -794,7 +797,7 @@ else
    case 'reset':
     drop_db();
     create_db();
-    @unlink('schema.php');
+    @unlink('./schema/schema.php');
     _migrate();
     break;
    case   'roll':
@@ -813,7 +816,7 @@ else
     $param=_argv();
     $param=_to_filename($param);
     if (!$param)
-     $param=$config['database'].'_'.date('ymdhis').'.sql';
+     $param=$config['database'].'_'.date('ymdHis').'.sql';
     echo "\ncreating $param";
     if (substr($config['adapter'],0,5)=='mysql') {
      echo "\nbackup depends on mysqldump utility available in path, if not run manually:";
