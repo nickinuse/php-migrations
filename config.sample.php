@@ -16,6 +16,7 @@ $config=array(
     'hook'=>'_sql_hook',
 );
 
+date_default_timezone_set('UTC');
 error_reporting(E_ALL);
 //these will translate to e.g. mysql_connect()
 $config['adapter_connect']=$config['adapter'].'_connect';
