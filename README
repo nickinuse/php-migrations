@@ -42,13 +42,13 @@
  
  INSTALLATION/USE
  
- rename config.sample.php to config.php and modify it as prompted in comments
+ rename/copy config.sample.php to config.php and modify it as prompted in comments
  
  to get started, launch a console in the directory containing migrate.php and launch:
   php -f migrate.php help
  or use the provided convenience shell script
   db help
   
- If wanting to share with another developer, you should fork/uignore the migrate folder and schema.php.
+ If wanting to share with another developer, you should ignore schema/ folder or schema.php directly.
  
  Have a look at some documentation: http://wiki.github.com/nickinuse/php-migrations
