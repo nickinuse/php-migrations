@@ -649,7 +649,7 @@ Rails	postgresql	sqlite	sqlserver	Sybase
 :timestamp	timestamp	datetime	datetime	timestamp";
 //parse type mappings for different adapters
 $_map=array();
-$mapping=explode("\r\n",trim($mapping));
+$mapping=explode("\n",preg_replace('@\r\n@',"\n",trim($mapping)));
 foreach($mapping as $line) {
  $line=preg_replace('@\s+@','_',$line);
  if ($line[0]!=':') {
