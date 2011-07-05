@@ -476,8 +476,8 @@ function _generate($name) {
  if (file_exists($file))
   die("version already exists as $file");
  $fp=fopen($file,'w');
- fwrite($fp,"<?php\nclass "._camelize($name)."\n{\n\tfunction up(){//add changes\n\t\t".
-         "\n\t}\n\tfunction down(){//revert changes\n\t\t\n\t}\n}\n?>");
+ fwrite($fp,"<?php\nclass "._camelize($name)."\n{\n  function up(){//add changes\n    ".
+         "\n  }\n  function down(){//revert changes\n    \n  }\n}\n");
  fclose($fp);
  echo "\n generated $file";
 }
