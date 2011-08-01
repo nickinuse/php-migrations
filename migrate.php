@@ -223,7 +223,7 @@ function _clear_options() {
  *  <tt>primary_key</tt> what column name to use for primary key instead of the default `id`
  *  <tt>temporary</tt> whether the table is temporary
  *  <tt>options</tt> user-defined SQL options for the table.
- *   <b>note:</b> you loose the default TYPE=InnoDB and utf-8 encoding statement if specified
+ *   <b>note:</b> you loose the default ENGINE=InnoDB and utf-8 encoding statement if specified
  *  <tt>id</tt> if false will opt to create a primary key-less table
  *               (unless specifically defined for a column)
  *  <tt>comment</tt> comment for the table
@@ -280,7 +280,7 @@ function create_table($table="",$opt=array(),$fields=array()) {
    $config['fields'][]=$val;
  $glue[]="\n(\n".join(",\n",$config['fields'])."\n)";
  $glue[]=!empty($opt['comment']) ? 'COMMENT="'.$opt['comment'].'"' : "";
- $glue[]=!empty($opt['options']) ? $opt['options'] : "TYPE = InnoDB /*!40100 DEFAULT CHARSET utf8 COLLATE utf8_general_ci */";
+ $glue[]=!empty($opt['options']) ? $opt['options'] : "ENGINE = InnoDB /*!40100 DEFAULT CHARSET utf8 COLLATE utf8_general_ci */";
  array_walk($glue,'trim');
  $glue[]=";";
  execute(trim(join(" ",$glue)));
